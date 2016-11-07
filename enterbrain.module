@@ -1,0 +1,63 @@
+<?php
+
+use \Drupal\enterbrain\Api;
+
+/**
+ * Implements hook_payment_status_change().
+ *
+ * This callback triggers the calls to NeuerFoerderer2.
+ */
+function enterbrain_payment_status_change(Payment $payment, PaymentStatusItem $previous_status_item) {
+  if (!$payment->pid) {
+    return;
+  }
+  if (!payment_status_is_or_has_ancestor($payment->getStatus()->status, PAYMENT_STATUS_SUCCESS)) {
+    return;
+  }
+  if (payment_status_is_or_has_ancestor($previous_status_item->status, PAYMENT_STATUS_SUCCESS)) {
+    return;
+  }
+
+  $queue = \DrupalQueue::get('enterbrain_payment', TRUE);
+  $queue->createItem($payment->pid);
+}
+
+/**
+ * Implements hook_cronapi().
+ *
+ * Execute our send queues.
+ */
+function enterbrain_cronapi() {
+  $items['enterbrain_send_payments'] = array(
+    'title' => t('EnterBrain payment data.'),
+    //'file' => 'enterbrain.jobs.php',
+    'tags' => array('enterbrain'),
+  );
+  return $items;
+}
+
+/**
+ * Cron-callback: Send payment events.
+ *
+ * Much of this is copied from @see drupal_cron_run() .
+ */
+function enterbrain_send_payments() {
+  $api = Api::fromConfig();
+
+  $callback = 'enterbrain_send_payment';
+  $end = time() + variable_get('enterbrain_api_send_time', 30);
+  $queue = DrupalQueue::get('enterbrain_payment');
+  while (time() < $end && ($item = $queue->claimItem())) {
+    try {
+      $pid = $item->data;
+      $payments = entity_load('payment', [$pid], [], TRUE);
+      $payment = reset($payments);
+      $api->sendPayment($payment);
+    }
+    catch (Exception $e) {
+      // In case of exception log it and leave the item in the queue
+      // to be processed again later.
+      watchdog_exception('enterbrain', $e);
+    }
+  }
+}

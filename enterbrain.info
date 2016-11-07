@@ -1,0 +1,6 @@
+name = BUND Enterbrain integration
+description = Send payment and other data to EnterBrain.
+core = 7.x
+
+dependencies[] = psr0
+dependencies[] = webform_paymethod_select

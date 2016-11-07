@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function enterbrain_install() {
+  DrupalQueue::get('enterbrain_payment')->createQueue();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function enterbrain_uninstall() {
+  DrupalQueue::get('enterbrain_payment')->deleteQueue();
+}
