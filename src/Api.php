@@ -2,6 +2,9 @@
 
 namespace Drupal\enterbrain;
 
+use \Drupal\little_helpers\ArrayConfig;
+use \Drupal\little_helpers\Webform\Submission;
+
 class Api extends \SoapClient {
 
   public static $default_config = [
@@ -21,6 +24,18 @@ class Api extends \SoapClient {
       'gebdat' => ['date_of_birth'],
       'anrede_id' => ['salutation'],
     ],
+    'defaults' => [
+      'project_id' => '',
+      'project_name' => '',
+      'wc' => '',
+    ],
+  ];
+
+  // E or M or V or H or J
+  public static $interval_map = [
+    '1' => 'E',
+    'y' => 'J',
+    'm' => 'M',
   ];
 
   /**
@@ -33,29 +48,77 @@ class Api extends \SoapClient {
    */
   protected $fieldMap;
 
+  protected $defaults;
+
   public static function fromConfig($config = []) {
     if (!$config) {
       $config = variable_get('enterbrain_api_config', []);
     }
-    $config += static::$default_config;
-    $config['field_map'] += static::$default_config['field_map'];
-    return new static($config['endpoint'], $config['appl_id'], $config['field_map']);
+    ArrayConfig::mergeDefaults($config, static::$default_config);
+    return new static($config['endpoint'], $config['appl_id'], $config['field_map'], $config['defaults']);
   }
 
-  public function __construct($url, $appl_id, $field_map) {
+  public function __construct($url, $appl_id, $field_map, $defaults) {
+    $context = stream_context_create([
+      'ssl' => [
+        // set some SSL/TLS specific options
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true
+      ],
+    ]);
     parent::__construct($url, [
       'soap_version' => SOAP_1_2,
+      'stream_context' => $context,
     ]);
     $this->appId = $appl_id;
     $this->fieldMap = $field_map;
+    $this->defaults = $defaults;
   }
   
   /**
    * Add appl_id as the first parameter.
    */
-  public function __call($name, $arguments) {
-    array_unshift($arguments, $this->appId);
-    parent::__call($name, $arguments);
+  protected function call($name, $arguments) {
+    $arguments = ['appl_id' => $this->appId] + $arguments;
+    try {
+      $response = parent::__soapCall($name, ['parameters' => $arguments]);
+    }
+    $result = $response[$name . 'Result'];
+    if ($result->returncode < 0) {
+      throw new CronError("API: {$result->errormsg} - {$result->debugstring}");
+    }
+    return $response;
+  }
+
+  public function sonstigeInfo(Submission $s) {
+    $optin = FALSE;
+    foreach ($s->webform->componentsByType('newsletter') as $component) {
+      $value = $s->valuesByCid($component['cid']);
+      if (!empty($value['subscribed'])) {
+        $optin = TRUE;
+        break;
+      }
+    }
+
+
+    $d = [
+      '[wc]' => $this->defaults['wc'],
+      '[Projektname]' => $this->defaults['project_name'],
+      '[Projekt-Id]' => $this->defaults['project_id'],
+    ];
+    if (module_exists('enterbrain_fields') && !empty($s->node->field_enterbrain)) {
+      $w_node = entity_metadata_wrapper('node', $s->node);
+      $w_enterbrain = entity_metadata_wrapper('field_collection_item', $w_node->field_enterbrain->value());
+      $d = [
+        '[wc]' => $w_enterbrain->field_enterbrain_wc->value(),
+        '[Projektname]' => $w_enterbrain->field_enterbrain_project_name->value(),
+        '[Projekt-Id]' => $w_enterbrain->field_enterbrain_project_id->value(),
+      ];
+    }
+    $d['[true|false]'] = $optin ? 'true' : 'false';
+
+    return strtr("WCintern=[wc], Verwendungszweck: [Projektname], Newsletter: [true|false], CRM-ID: [Projekt-Id]", $d);
   }
 
   public function sendPayment(\Payment $payment) {
@@ -65,41 +128,44 @@ class Api extends \SoapClient {
     }
     $s = $payment->contextObj->getSubmission();
 
+    $interval = $s->valueByKey('donation_interval');
+    $interval = isset(static::$interval_map[$interval]) ? static::$interval_map[$interval] : 'E';
+
     // Pre-define the data array so we have them in the right order but can use
     // keys to assign values.
     $args = [
-      'anrede_id' => NULL,
-      'titel' => NULL,
-      'name' => NULL,
-      'vorname' => NULL,
-      'strasse' => NULL,
-      'hausnr' => NULL,
-      'plz' => NULL,
-      'ort' => NULL,
-      'staat_id' => NULL,
-      'adrzus1' => NULL,
-      'adrzus2' => NULL,
-      'email' => NULL,
-      'tel' => NULL,
-      'gebdat' => NULL,
+      'anrede_id' => '',
+      'titel' => '',
+      'name' => '',
+      'vorname' => '',
+      'strasse' => '',
+      'hausnr' => '',
+      'plz' => '',
+      'ort' => '',
+      'staat_id' => '',
+      'adrzus1' => '',
+      'adrzus2' => '',
+      'email' => '',
+      'tel' => '',
+      'gebdat' => '',
       'betrag' => $payment->totalAmount(TRUE),
-      'rythmus' => NULL,
-      'starttermin' => NULL,
-      'inhaber1' => NULL,
-      'inhaber2' => NULL,
-      'ktonr' => NULL,
-      'blz' => NULL,
-      'bic' => NULL,
-      'iban' => NULL,
-      'bankname' => NULL,
-      'jzwb' => NULL,
-      'bemerkung' => NULL,
-      'sonstige_info' => NULL,
-      'name_pate' => NULL,
-      'geschenkjn' => NULL,
-      'transnr' => NULL,
-      'transcode' => NULL,
-      'quelle' => 'SEPA',
+      'rythmus' => $interval,
+      'starttermin' => date('c', $payment->getStatus()->created),
+      'inhaber1' => '',
+      'inhaber2' => '',
+      'ktonr' => '',
+      'blz' => '',
+      'bic' => '',
+      'iban' => '',
+      'bankname' => '',
+      'jzwb' => '',
+      'bemerkung' => '',
+      'sonstige_info' => '',
+      'name_pate' => '',
+      'geschenkjn' => '',
+      'transnr' => '',
+      'transcode' => '',
+      'quelle' => '',
       'request_id' => NULL,
     ];
 
@@ -131,25 +197,8 @@ class Api extends \SoapClient {
       $args['quelle'] = 'SEPA';
     }
 
-    $optin = FALSE;
-    foreach ($s->webform->componentsByType('newsletter') as $component) {
-      $value = $s->valuesByCid($component['cid']);
-      if (!empty($value['subscribed'])) {
-        $optin = TRUE;
-        break;
-      }
-    }
-
-    $args['sonstige_info'] = strtr("WCintern=[wc], Verwendungszweck: [Projektname], Newsletter: [true|false], CRM-ID: [Projekt-Id]", [
-      '[wc]' => '',
-      '[Projektname]' => '',
-      '[true|false]' => $optin ? 'true' : 'false',
-      '[Projekt-Id]' => '',
-    ]);
-    dd($payment, 'payment');
-    dd($args, 'args');
-
-    //call_user_func_array([$this, 'BrainBUND_NeuerFoerderer2'], $args);
+    $args['sonstige_info'] = $this->sonstigeInfo($s);
+    $this->call('BrainBUND_NeuerFoerderer2', $args);
   }
 
 }

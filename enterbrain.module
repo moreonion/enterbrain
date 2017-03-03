@@ -3,6 +3,22 @@
 use \Drupal\enterbrain\Api;
 
 /**
+ * Implements hook_menu().
+ */
+function enterbrain_menu() {
+  $items['admin/config/services/enterbrain'] = [
+    'title' => 'Enterbrain settings',
+    'description' => 'API access and default project.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['enterbrain_config_form'],
+    'file' => 'enterbrain.admin.inc',
+    'access arguments' => ['administer enterbrain settings'],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+  return $items;
+}
+
+/**
  * Implements hook_payment_status_change().
  *
  * This callback triggers the calls to NeuerFoerderer2.
@@ -53,6 +69,7 @@ function enterbrain_send_payments() {
       $payments = entity_load('payment', [$pid], [], TRUE);
       $payment = reset($payments);
       $api->sendPayment($payment);
+      $queue->deleteItem($item);
     }
     catch (Exception $e) {
       // In case of exception log it and leave the item in the queue
