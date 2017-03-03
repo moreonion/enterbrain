@@ -1,0 +1,14 @@
+name = enterbrain_fields
+core = 7.x
+package = Features
+dependencies[] = features
+dependencies[] = field_collection
+dependencies[] = text
+features[features_api][] = api:2
+features[field_base][] = field_enterbrain
+features[field_base][] = field_enterbrain_project_id
+features[field_base][] = field_enterbrain_project_name
+features[field_base][] = field_enterbrain_wc
+features[field_instance][] = field_collection_item-field_enterbrain-field_enterbrain_project_id
+features[field_instance][] = field_collection_item-field_enterbrain-field_enterbrain_project_name
+features[field_instance][] = field_collection_item-field_enterbrain-field_enterbrain_wc
