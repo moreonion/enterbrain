@@ -6,9 +6,12 @@ use \Drupal\little_helpers\ArrayConfig;
 use \Drupal\little_helpers\Webform\Submission;
 use \Drupal\webform_paymethod_select\WebformPaymentContext;
 
+/**
+ * Class for calling the enterbrain SOAP API.
+ */
 class Api extends \SoapClient {
 
-  public static $default_config = [
+  public static $defaultConfig = [
     'endpoint' => NULL,
     'appl_id' => NULL,
     'field_map' => [
@@ -32,8 +35,8 @@ class Api extends \SoapClient {
     ],
   ];
 
-  // E or M or V or H or J
-  public static $interval_map = [
+  // One of: E or M or V or H or J.
+  public static $intervalMap = [
     '1' => 'E',
     'y' => 'J',
     'm' => 'M',
@@ -41,11 +44,15 @@ class Api extends \SoapClient {
 
   /**
    * The application ID has to be added to each API call for authentication.
+   *
+   * @var string
    */
   protected $appId;
-  
+
   /**
    * Map enterbrain data ids to form_keys.
+   *
+   * @var array
    */
   protected $fieldMap;
 
@@ -58,7 +65,7 @@ class Api extends \SoapClient {
     if (!$config) {
       $config = variable_get('enterbrain_api_config', []);
     }
-    ArrayConfig::mergeDefaults($config, static::$default_config);
+    ArrayConfig::mergeDefaults($config, static::$defaultConfig);
     return new static($config['endpoint'], $config['appl_id'], $config['field_map'], $config['defaults']);
   }
 
@@ -150,7 +157,7 @@ class Api extends \SoapClient {
     $s = $payment->contextObj->getSubmission();
 
     $interval = $s->valueByKey('donation_interval');
-    $interval = isset(static::$interval_map[$interval]) ? static::$interval_map[$interval] : 'E';
+    $interval = isset(static::$intervalMap[$interval]) ? static::$intervalMap[$interval] : 'E';
 
     // Pre-define the data array so we have them in the right order but can use
     // keys to assign values.

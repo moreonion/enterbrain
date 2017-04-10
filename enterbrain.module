@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * The main module file containing hook implementations and the cron job.
+ */
+
 use \Drupal\enterbrain\Api;
 
 require_once 'integrations/manual_direct_debit.php';
@@ -49,7 +54,6 @@ function enterbrain_payment_status_change(Payment $payment, PaymentStatusItem $p
 function enterbrain_cronapi() {
   $items['enterbrain_send_payments'] = array(
     'title' => t('EnterBrain payment data.'),
-    //'file' => 'enterbrain.jobs.php',
     'tags' => array('enterbrain'),
   );
   return $items;

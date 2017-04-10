@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Install, uninstall and update functions for this module.
+ */
+
+/**
  * Implements hook_install().
  */
 function enterbrain_install() {

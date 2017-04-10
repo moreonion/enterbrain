@@ -103,10 +103,10 @@ class ConfigForm {
         // Make a test-request if everything seems valid so far.
         try {
           // We need to suppress PHP-warnings here.
-          /*$client = @new \SoapClient($config['endpoint'], [
+          $client = @new \SoapClient($config['endpoint'], [
             'soap_version' => SOAP_1_2,
             'cache_wsdl' => WSDL_CACHE_NONE,
-          ]);*/
+          ]);
           $valid_url = TRUE;
         }
         catch (\SoapFault $e) {
