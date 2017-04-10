@@ -2,6 +2,8 @@
 
 use \Drupal\enterbrain\Api;
 
+require_once 'integrations/manual_direct_debit.php';
+
 /**
  * Implements hook_menu().
  */

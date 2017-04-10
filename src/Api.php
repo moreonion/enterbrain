@@ -210,15 +210,8 @@ class Api extends \SoapClient {
       }
     }
 
-    if ($payment->method->controller instanceof \Drupal\manual_direct_debit\AccountDataController) {
-      $md = $payment->method_data;
-      $args['inhaber1'] = $md['holder'];
-      $args['iban'] = $md['iban'];
-      $args['bic'] = $md['bic'];
-      $args['quelle'] = 'SEPA';
-    }
-
     $args['sonstige_info'] = $this->sonstigeInfo($s);
+    drupal_alter('enterbrain_payment_data', $args, $payment, $s);
     $this->call('BrainBUND_NeuerFoerderer2', $args);
   }
 
