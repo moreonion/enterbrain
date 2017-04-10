@@ -4,8 +4,14 @@ namespace Drupal\enterbrain;
 
 use \Drupal\little_helpers\ArrayConfig;
 
+/**
+ * Admin configuration form.
+ */
 class ConfigForm {
-  
+
+  /**
+   * Form callback.
+   */
   public function form(array &$element, array &$form_state) {
     $element['#tree'] = TRUE;
     $config = variable_get('enterbrain_api_config', []);
@@ -19,7 +25,7 @@ class ConfigForm {
       '#default_value' => $config['endpoint'],
     ];
     $element['endpoint']['#attributes']['placeholder'] = 'https://sec.enterbrain.de/BrainSoapAuto.aspx?WSDL';
-    
+
     $element['appl_id'] = [
       '#type' => 'textfield',
       '#title' => t('Application ID'),
@@ -72,6 +78,9 @@ class ConfigForm {
     return $element;
   }
 
+  /**
+   * Validate callback.
+   */
   public function validate(array &$element, array &$form_state) {
     $config = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
 
@@ -84,7 +93,7 @@ class ConfigForm {
         $valid_appl_id = TRUE;
       }
     }
-    
+
     $valid_url = FALSE;
     if ($config['endpoint']) {
       if (FALSE && substr($config['endpoint'], 0, 8) !== 'https://') {
@@ -105,7 +114,7 @@ class ConfigForm {
         }
       }
     }
-    
+
     if ($valid_url && $valid_appl_id) {
       try {
         $api = Api::fromConfig($config);
@@ -124,6 +133,9 @@ class ConfigForm {
     form_set_value($element, $config, $form_state);
   }
 
+  /**
+   * Define form elements for billing data.
+   */
   public static function extraDataFields() {
     $fields = array();
     $f = array(
@@ -153,10 +165,7 @@ class ConfigForm {
     $fields['anrede_id']['#options'] = [2890 => t('Ms/Mrs'), 2989 => t('Mr')];
     $fields['anrede_id']['#required'] = TRUE;
 
-
     return $fields;
   }
 
-  
 }
-

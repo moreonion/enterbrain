@@ -2,8 +2,7 @@
 
 /**
  * @file
- *
- * This file defines the module configuration form.
+ * This file defines callbacks for the ConfigForm.
  */
 
 use Drupal\enterbrain\ConfigForm;

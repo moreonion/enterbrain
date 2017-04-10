@@ -1,4 +1,5 @@
 name = enterbrain_fields
+description = Defines a field_enterbrain fieldset that can be used for per-node configuration.
 core = 7.x
 package = Features
 dependencies[] = features
