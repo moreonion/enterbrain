@@ -6,15 +6,22 @@
  */
 
 use \Drupal\payone_payment\ControllerBase;
+use \Drupal\payone_payment\CreditCardController;
+use \Drupal\payone_payment\PaypalECController;
 use \Drupal\payone_payment\Transaction;
 
 /**
  * Implements hook_enterbrain_payment_data_alter().
  */
 function payone_enterbrain_payment_data_alter(array &$data, \Payment $payment, $submission) {
-  $data['quelle'] = 'PayOne';
   if ($payment->method->controller instanceof ControllerBase) {
-    if ($t = Transaction::loadByPid($payment->pid)) {
+    if ($payment->method->controller instanceof CreditCardController) {
+      $data['quelle'] = 'Kreditkarte';
+    }
+    if ($payment->method->controller instanceof PaypalECController) {
+      $data['quelle'] = 'Paypal';
+    }
+    if ($t = Transaction::loadLastByPid($payment->pid)) {
       $data['transnr'] = $t->txid;
     }
   }
