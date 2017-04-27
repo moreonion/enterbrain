@@ -95,10 +95,8 @@ class Api extends \SoapClient {
    */
   protected function call($name, $arguments) {
     $arguments = ['appl_id' => $this->appId] + $arguments;
-    try {
-      $response = parent::__soapCall($name, ['parameters' => $arguments]);
-    }
-    $result = $response[$name . 'Result'];
+    $response = parent::__soapCall($name, ['parameters' => $arguments]);
+    $result = $response->{$name . 'Result'};
     if ($result->returncode < 0) {
       throw new CronError("API: {$result->errormsg} - {$result->debugstring}");
     }

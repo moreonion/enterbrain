@@ -15,7 +15,7 @@ class ConfigForm {
   public function form(array &$element, array &$form_state) {
     $element['#tree'] = TRUE;
     $config = variable_get('enterbrain_api_config', []);
-    ArrayConfig::mergeDefaults($config, Api::$default_config);
+    ArrayConfig::mergeDefaults($config, Api::$defaultConfig);
 
     $element['endpoint'] = [
       '#type' => 'textfield',

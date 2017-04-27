@@ -13,7 +13,7 @@ use \Drupal\payone_payment\Transaction;
 /**
  * Implements hook_enterbrain_payment_data_alter().
  */
-function payone_enterbrain_payment_data_alter(array &$data, \Payment $payment, $submission) {
+function payone_payment_enterbrain_payment_data_alter(array &$data, \Payment $payment, $submission) {
   if ($payment->method->controller instanceof ControllerBase) {
     if ($payment->method->controller instanceof CreditCardController) {
       $data['quelle'] = 'Kreditkarte';
