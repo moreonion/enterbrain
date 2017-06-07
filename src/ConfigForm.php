@@ -35,6 +35,15 @@ class ConfigForm {
     ];
     $element['appl_id']['#attributes']['placeholder'] = '{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}';
 
+    $element['bank_appl_id'] = [
+      '#type' => 'textfield',
+      '#title' => t('BrainBank application ID'),
+      '#description' => t('This is the secret key used to authenticate for BrainBank API-calls.'),
+      '#required' => TRUE,
+      '#default_value' => $config['bank_appl_id'],
+    ];
+    $element['appl_id']['#attributes']['placeholder'] = '{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}';
+
     $element['field_map'] = array(
       '#type' => 'fieldset',
       '#title' => t('Personal data mapping'),
@@ -91,6 +100,14 @@ class ConfigForm {
       }
       else {
         $valid_appl_id = TRUE;
+      }
+    }
+    if ($config['bank_appl_id']) {
+      if (!preg_match('/^\{[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\}$/', $config['appl_id'])) {
+        form_error($element['bank_appl_id'], t('Please enter a valid bank application ID. It follows the pattern {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.'));
+      }
+      else {
+        $valid_appl_id = $valid_appl_id && TRUE;
       }
     }
 
