@@ -6,6 +6,7 @@
  */
 
 use \Drupal\enterbrain\Api;
+use \Drupal\manual_direct_debit\AccountDataController;
 
 require_once 'integrations/manual_direct_debit.php';
 require_once 'integrations/payone_payment.php';
@@ -133,4 +134,33 @@ function enterbrain_check_iban($iban) {
     watchdog_exception('enterbrain', $e);
     return 502;
   }
+}
+
+/**
+ * Implements hook_payment_forms_payment_form_alter().
+ */
+function enterbrain_payment_forms_payment_form_alter(&$element, \Payment $payment) {
+  if ($payment->method->controller instanceof AccountDataController) {
+    $element['#attached']['js'][] = drupal_get_path('module', 'enterbrain') . '/enterbrain.js';
+    $element['#attached']['libraries_load'][] = array('iban');
+    $element['ibanbic']['iban']['#attributes']['data-enterbrain-field'][] = 'iban';
+    $element['ibanbic']['bic']['#attributes']['data-enterbrain-field'][] = 'bic';
+  }
+}
+
+
+/**
+ * Implements hook_libraries_info().
+ */
+function enterbrain_libraries_info() {
+  $libraries['iban'] = array(
+    'name' => 'IBAN validation',
+    'vendor url' => 'https://github.com/arhs/iban.js',
+    'download url' => 'https://github.com/arhs/iban.js',
+    'version callback' => 'libraries_get_package_json_version',
+    'files' => array(
+      'js' => array('iban.js'),
+    ),
+  );
+  return $libraries;
 }
