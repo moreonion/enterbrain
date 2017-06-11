@@ -6,6 +6,7 @@
  */
 
 use \Drupal\enterbrain\Api;
+use \Drupal\manual_direct_debit\AccountDataController;
 
 require_once 'integrations/manual_direct_debit.php';
 require_once 'integrations/payone_payment.php';
@@ -22,6 +23,15 @@ function enterbrain_menu() {
     'file' => 'enterbrain.admin.inc',
     'access arguments' => ['administer enterbrain settings'],
     'type' => MENU_NORMAL_ITEM,
+  ];
+  $items['enterbrain/check-iban/%'] = [
+    'title' => 'Submit an IBAN for checking',
+    'description' => 'The IBAN is checked against the enterbrain API and if valid returns the accompanying BIC.',
+    'page callback' => 'enterbrain_check_iban',
+    'page arguments' => [2],
+    'access callback' => 'enterbrain_form_api_access',
+    'delivery callback' => 'little_helpers_deliver_json',
+    'type' => MENU_CALLBACK,
   ];
   return $items;
 }
@@ -84,4 +94,73 @@ function enterbrain_send_payments() {
       watchdog_exception('enterbrain', $e);
     }
   }
+}
+
+/**
+ * Access callback: Allow up to 60 requests per hour per IP.
+ *
+ * @return bool
+ *   TRUE if access is granted otherwise false.
+ */
+function enterbrain_form_api_access() {
+  $event = 'enterbrain_form_api';
+  if (flood_is_allowed('enterbrain_form_api', 60, 3600)) {
+    flood_register_event('enterbrain_form_api', 3600);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Page callback: Checks an IBAN against the enterbrain API.
+ *
+ * @param string $iban
+ *   The string to check.
+ *
+ * @return array
+ *   API response includes the following keys:
+ *   - valid (TRUE|FALSE): Whether this is a valid key.
+ *   - bic (only if available): The BIC code for this IBAN.
+ *   - error (if not valid): A reason for why this IBAN is invalid.
+ *
+ * @see enterbrain_menu()
+ */
+function enterbrain_check_iban($iban) {
+  try {
+    $api = Api::fromConfig();
+    return $api->checkIBAN($iban);
+  }
+  catch (\SoapFault $e) {
+    watchdog_exception('enterbrain', $e);
+    return 502;
+  }
+}
+
+/**
+ * Implements hook_payment_forms_payment_form_alter().
+ */
+function enterbrain_payment_forms_payment_form_alter(&$element, \Payment $payment) {
+  if ($payment->method->controller instanceof AccountDataController) {
+    $element['#attached']['js'][] = drupal_get_path('module', 'enterbrain') . '/enterbrain.js';
+    $element['#attached']['libraries_load'][] = array('iban');
+    $element['ibanbic']['iban']['#attributes']['data-enterbrain-field'][] = 'iban';
+    $element['ibanbic']['bic']['#attributes']['data-enterbrain-field'][] = 'bic';
+  }
+}
+
+
+/**
+ * Implements hook_libraries_info().
+ */
+function enterbrain_libraries_info() {
+  $libraries['iban'] = array(
+    'name' => 'IBAN validation',
+    'vendor url' => 'https://github.com/arhs/iban.js',
+    'download url' => 'https://github.com/arhs/iban.js',
+    'version callback' => 'libraries_get_package_json_version',
+    'files' => array(
+      'js' => array('iban.js'),
+    ),
+  );
+  return $libraries;
 }

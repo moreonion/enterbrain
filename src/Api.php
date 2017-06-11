@@ -14,6 +14,7 @@ class Api extends \SoapClient {
   public static $defaultConfig = [
     'endpoint' => NULL,
     'appl_id' => NULL,
+    'bank_appl_id' => NULL,
     'field_map' => [
       'titel' => ['title'],
       'vorname' => ['first_name'],
@@ -50,6 +51,13 @@ class Api extends \SoapClient {
   protected $appId;
 
   /**
+   * The application ID must be added to each BrainBank call for authentication.
+   *
+   * @var string
+   */
+  protected $bankAppId;
+
+  /**
    * Map enterbrain data ids to form_keys.
    *
    * @var array
@@ -66,13 +74,13 @@ class Api extends \SoapClient {
       $config = variable_get('enterbrain_api_config', []);
     }
     ArrayConfig::mergeDefaults($config, static::$defaultConfig);
-    return new static($config['endpoint'], $config['appl_id'], $config['field_map'], $config['defaults']);
+    return new static($config['endpoint'], $config['appl_id'], $config['bank_appl_id'], $config['field_map'], $config['defaults']);
   }
 
   /**
    * Constructor.
    */
-  public function __construct($url, $appl_id, $field_map, $defaults) {
+  public function __construct($url, $appl_id, $bank_appl_id, $field_map, $defaults) {
     $context = stream_context_create([
       'ssl' => [
         // Set some SSL/TLS specific options.
@@ -86,6 +94,7 @@ class Api extends \SoapClient {
       'stream_context' => $context,
     ]);
     $this->appId = $appl_id;
+    $this->bankAppId = $bank_appl_id;
     $this->fieldMap = $field_map;
     $this->defaults = $defaults;
   }
@@ -93,10 +102,10 @@ class Api extends \SoapClient {
   /**
    * Add appl_id as the first parameter.
    */
-  protected function call($name, $arguments) {
-    $arguments = ['appl_id' => $this->appId] + $arguments;
+  protected function call($name, $app_id, $arguments) {
+    $arguments = ['appl_id' => $app_id] + $arguments;
     $response = parent::__soapCall($name, ['parameters' => $arguments]);
-    $result = $response->{$name . 'Result'};
+    return $response->{$name . 'Result'};
     if ($result->returncode < 0) {
       throw new CronError("API: {$result->errormsg} - {$result->debugstring}");
     }
@@ -217,7 +226,48 @@ class Api extends \SoapClient {
 
     $args['sonstige_info'] = $this->sonstigeInfo($s);
     drupal_alter('enterbrain_payment_data', $args, $payment, $s);
-    $this->call('BrainBUND_NeuerFoerderer2', $args);
+    $result = $this->call('BrainBUND_NeuerFoerderer2', $this->appId, $args);
+    if ($result->returncode < 0) {
+      throw new CronError("API: {$result->errormsg} - {$result->debugstring}");
+    }
+  }
+
+  /**
+   * Check an IBAN for validity and optional get the BIC.
+   *
+   * @param string $iban
+   *   The string to check.
+   *
+   * @return array
+   *   API response includes the following keys:
+   *   - valid (TRUE|FALSE): Whether this is a valid key.
+   *   - bic (only if available): The BIC code for this IBAN.
+   *   - error (if not valid): A reason for why this IBAN is invalid.
+   */
+  public function checkIBAN($iban) {
+    $result = $this->call('BrainBank_TestIban', $this->bankAppId, ['iban' => $iban]);
+    $ret['valid'] = $result->returncode == 0;
+    if ($ret['valid']) {
+      $ret['bic'] = isset($result->errormsg) ? $result->errormsg : NULL;
+    }
+    else {
+      switch ($result->returncode) {
+        case 12:
+          $ret['error'] = 'Invalid characters';
+          break;
+        case 13:
+        case 22:
+          $ret['error'] = 'Checksum error';
+          break;
+        case 25:
+          $ret['error'] = 'IBAN is not from SEPA country.';
+          break;
+        case 26:
+          $ret['error'] = 'IBAN format is not valid for this country.';
+          break;
+      }
+    }
+    return $ret;
   }
 
 }
