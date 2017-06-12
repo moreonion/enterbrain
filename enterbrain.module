@@ -145,6 +145,9 @@ function enterbrain_payment_forms_payment_form_alter(&$element, \Payment $paymen
     $element['#attached']['libraries_load'][] = array('iban');
     $element['ibanbic']['iban']['#attributes']['data-enterbrain-field'][] = 'iban';
     $element['ibanbic']['bic']['#attributes']['data-enterbrain-field'][] = 'bic';
+    // Account holder isn’t used with enterbrain.
+    $element['holder']['#access'] = FALSE;
+    $element['holder']['#soft_required'] = FALSE;
   }
 }
 
