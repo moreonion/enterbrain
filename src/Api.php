@@ -40,6 +40,8 @@ class Api extends \SoapClient {
   public static $intervalMap = [
     '1' => 'E',
     'y' => 'J',
+    's' => 'H',
+    'q' => 'V',
     'm' => 'M',
   ];
 
