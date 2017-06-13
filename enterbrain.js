@@ -57,9 +57,7 @@ Drupal.behaviors.enterbrain = {
         return;
       }
 
-      console.log('prevalidating...');
       if (preValidateIban(iban)) {
-        console.log('...ok. request sent');
         firstTry = false;
         querying = true;
         // Lock the field while checking.
@@ -67,16 +65,13 @@ Drupal.behaviors.enterbrain = {
         showMessage('wait');
         $.get('/enterbrain/check-iban/' + strippedIban).done(function (response) {
           if (response.valid) {
-            console.log('valid', response, iban);
             lastValidatedIban = strippedIban;
             if (response.bic) {
-              console.log('bic provided');
               lastValidatedBic = response.bic;
               $bicField.val(response.bic);
               showBicField(false);
               showMessage('show-bic');
             } else {
-              console.log('no bic provided');
               lastValidatedBic = null;
               resetBicField();
               showBicField(true);
@@ -84,7 +79,6 @@ Drupal.behaviors.enterbrain = {
               showMessage('ok');
             }
           } else {
-            console.log('invalid', response);
             resetBicField();
             showMessage('bad');
           }
@@ -121,10 +115,8 @@ Drupal.behaviors.enterbrain = {
 
     function showMessage(type) {
       if (firstTry) {
-        console.log('don’t show message on first try');
         return;
       }
-      console.log('show messge: ' + type);
       var message = '';
       var cls = '';
       if (type == 'wait') {
@@ -155,13 +147,11 @@ Drupal.behaviors.enterbrain = {
     }
 
     $ibanField.on('change', function () {
-      console.log('trigger change');
       firstTry = false;
       validateIban(this.value);
     });
 
     $ibanField.on('input', function () {
-      console.log('trigger input');
       validateIban(this.value);
     });
   }
