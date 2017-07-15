@@ -2,6 +2,6 @@ name = BUND Enterbrain integration
 description = Send payment and other data to EnterBrain.
 core = 7.x
 
-dependencies[] = little_helpers
+dependencies[] = little_helpers (>=7.x-1.5)
 dependencies[] = psr0
 dependencies[] = webform_paymethod_select
