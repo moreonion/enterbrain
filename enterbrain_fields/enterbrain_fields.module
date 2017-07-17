@@ -15,7 +15,9 @@ use \Drupal\little_helpers\ArrayConfig;
 function enterbrain_fields_field_default_field_instances_alter(&$fields) {
   foreach (['project_id', 'project_name', 'wc'] as $k) {
     $p = 'field_collection_item-field_enterbrain-field_enterbrain_';
-    $fields[$p . $k]['default_value_function'] = '_enterbrain_fields_default_field_value';
+    if (!empty($fields[$p . $k])) {
+      $fields[$p . $k]['default_value_function'] = '_enterbrain_fields_default_field_value';
+    }
   }
 }
 
