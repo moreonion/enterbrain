@@ -2,5 +2,32 @@
 
 /**
  * @file
- * Drupal needs this blank file.
+ * Hook implementations.
  */
+
+use \Drupal\little_helpers\ArrayConfig;
+
+/**
+ * Implements hook_field_default_field_instances_alter().
+ *
+ * Use the currently configured default values as default values for the fields.
+ */
+function enterbrain_fields_field_default_field_instances_alter(&$fields) {
+  foreach (['project_id', 'project_name', 'wc'] as $k) {
+    $p = 'field_collection_item-field_enterbrain-field_enterbrain_';
+    $fields[$p . $k]['default_value_function'] = '_enterbrain_fields_default_field_value';
+  }
+}
+
+/**
+ * Default field value callback.
+ *
+ * Set the default values based on the configuration variables.
+ */
+function _enterbrain_fields_default_field_value($entity_type, $entity, $field, $instance, $langcode = NULL) {
+  $name = str_replace('field_enterbrain_', '', $field['field_name']);
+  $defaults['defaults'][$name] = '';
+  $config = variable_get('enterbrain_api_config', []);
+  ArrayConfig::mergeDefaults($config, $defaults);
+  return [['value' => $config['defaults'][$name]]];
+}
