@@ -1,6 +1,7 @@
 name = BUND Enterbrain integration
 description = Send payment and other data to EnterBrain.
 core = 7.x
+configure = admin/config/services/enterbrain
 
 dependencies[] = little_helpers (>=7.x-1.5)
 dependencies[] = psr0
