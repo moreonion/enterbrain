@@ -37,8 +37,9 @@ mandatory.
 
 #### Sending a donation
 
-Whenever a direct debit payment is successful the module takes note of the
-payment and queues it for a later API transfer (see `enterbrain_payment_status_change`).
+Whenever a payment via [webform_paymethod_select](https://www.drupal.org/project/webform_paymethod_select)
+is successful the module takes note of the payment and queues it for a later API
+transfer (see `enterbrain_payment_status_change()`).
 
 The cron-job is invoked in configurable intervals (see [ultimate_cron](https://www.drupal.org/project/ultimate_cron)).
 Each time it is invoked it sends donations to enterbrain for a configurable amount of seconds.
@@ -53,6 +54,30 @@ The API-call `BrainBUND_NeuerFoerderer2` is invoked with the compiled data.
 
 If the API-call returns a negative `returncode` an error is thrown and the transfer
 will be retried at a later time.
+
+#### Personal data mapping
+
+On the module configuration page (`/admin/config/services/enterbrain`) the
+mapping of form fields to enterbrain fields can be configured. The default
+mapping is:
+
+| Enterbrain API field | form keys | remarks |
+|----------------------|-----------|---------|
+| titel | title |  |
+| vorname | first_name |  |
+| name | last_name |  |
+| strasse | street_name, street_address | By default street name and address are combined into one field in campaignion. The extra fields need to be added to the field palette in the installation profile. This has been done for the amnesty-at profile. |
+| hausnr | street_number |  |
+| adrzus1 | adrzus1 | No field in the palette, but a simple textfield with this form_key can be added to any form. |
+| plz | zip_code, postcode |  |
+| ort | city, ort |  |
+| email | email |  |
+| tel | phone_number |  |
+| gebdat | date_of_birth |  |
+| anrede_id | salutation | Values like `mr`, `mrs`, … as used by default in campaignion are mapped to numeric ids for the enterbrain API. |
+
+The form keys in the default mapping match the fields in the campaignion field
+palette as far as possible.
 
 #### IBAN/BIC validation and prefill
 
