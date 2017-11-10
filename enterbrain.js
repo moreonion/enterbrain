@@ -2,10 +2,17 @@ Drupal.behaviors.enterbrain = {
   attach: function (context, settings) {
 
     var $ibanField = $('[data-enterbrain-field=iban]', context);
+    if (!$ibanField.length) {
+      return;
+    }
     var $ibanFieldWrapper = $ibanField.closest('.form-item');
     var $ibanMessage = $('<div class="enterbrain-iban-message">').appendTo($ibanFieldWrapper);
     var $bicField = $('[data-enterbrain-field=bic]', context);
     var $bicFieldWrapper = $bicField.closest('.form-item');
+    var $methodForm = $ibanField.closest('.payment-method-form');
+    var $selector = $methodForm.closest('.paymethod-select-wrapper').find('.paymethod-select-radios');
+    var valid = false;
+    var active = !$selector.length;
 
     var firstTry = true;
     var querying = false;
@@ -17,7 +24,12 @@ Drupal.behaviors.enterbrain = {
       return;
     }
 
-    disableSubmitButton(true);
+    function checkActive() {
+      active = !$selector.length || $selector.find('.form-radio:checked').val() == $methodForm.data('pmid');
+      disableSubmitButton(!valid);
+    }
+    $selector.change(checkActive);
+    checkActive();
 
     // Hide the bic field only if it’s empty (it might not be due to server side validation!)
     if (!$bicField.val()) {
@@ -143,6 +155,8 @@ Drupal.behaviors.enterbrain = {
     }
 
     function disableSubmitButton(state) {
+      valid = !state;
+      state = state && active;
       $ibanField.closest('form').find('input.webform-submit').prop('disabled', state);
     }
 
