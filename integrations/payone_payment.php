@@ -16,10 +16,10 @@ use \Drupal\payone_payment\Transaction;
 function payone_payment_enterbrain_payment_data_alter(array &$data, \Payment $payment, $submission) {
   if ($payment->method->controller instanceof ControllerBase) {
     if ($payment->method->controller instanceof CreditCardController) {
-      $data['quelle'] = 'Kreditkarte';
+      $data['quelle'] = 'Credit';
     }
     if ($payment->method->controller instanceof PaypalECController) {
-      $data['quelle'] = 'Paypal';
+      $data['quelle'] = 'PayPal';
     }
     if ($t = Transaction::loadLastByPid($payment->pid)) {
       $data['transnr'] = $t->txid;
