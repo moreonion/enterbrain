@@ -14,7 +14,7 @@ function manual_direct_debit_enterbrain_payment_data_alter(&$data, \Payment $pay
   if ($payment->method->controller instanceof AccountDataController) {
     $md = $payment->method_data;
     $data['inhaber1'] = $md['holder'];
-    $data['iban'] = $md['iban'];
+    $data['iban'] = preg_replace('/\s+/', '', $md['iban']);
     $data['bic'] = $md['bic'];
     $data['quelle'] = 'SEPA';
   }
