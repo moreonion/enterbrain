@@ -18,8 +18,8 @@ enterbrain API.
 
 #### enterbrain_fields
 
-By default the enterbrain module uses a site-wide default for the `project_name`,
-`project_id` and `wc` field. Using the field_collection provided by the 
+By default the enterbrain module uses a site-wide default for the `project_name`
+and `project_id` field. Using the field_collection provided by the
 enterbrain_fields module these default can be overridden on a action-by-action
 basis. To force an action-by-action configuration these fields may be set to be
 mandatory.
@@ -47,8 +47,11 @@ Each time it is invoked it sends donations to enterbrain for a configurable amou
 The following data is combined for this (see `\Drupal\enterbrain\Api::sendPayment()`):
   - Payment data from the payment object (amount, interval, IBAN, BIC, …)
   - Personal data about the payee — as provided in the accompanying form submission.
-  - Metadata about the donation form from the action specific configuration or the site-wide
-    defaults if not available.
+  - Metadata (Project ID, Project name and „Werbecode“) about the donation is read from
+    various sources (ordered by descending priority):
+    1. The other tracking parameter is used as „Werbecode“.
+    2. Action specific configuration using `enterbrain_fields`.
+    3. Global default values configured in the module settings.
 
 The API-call `BrainBUND_NeuerFoerderer2` is invoked with the compiled data.
 

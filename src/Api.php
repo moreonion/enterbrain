@@ -147,6 +147,9 @@ class Api extends \SoapClient {
         '[Projekt-Id]' => $w_enterbrain->field_enterbrain_project_id->value(),
       ];
     }
+    if ($s->tracking->other) {
+      $d['[wc]'] = $s->tracking->other;
+    }
     $d['[true|false]'] = $optin ? 'true' : 'false';
 
     return strtr("WCintern=[wc], Verwendungszweck: [Projektname], Newsletter: [true|false], CRM-ID: [Projekt-Id]", $d);

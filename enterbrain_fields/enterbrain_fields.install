@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Database migrations for the enterbrain_fields module.
+ */
+
+/**
+ * Remove werbecode field.
+ */
+function enterbrain_fields_update_7001() {
+  module_load_include('crud.inc', 'field');
+  field_delete_field('field_enterbrain_wc');
+}
