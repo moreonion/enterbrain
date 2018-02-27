@@ -20,6 +20,7 @@ class ApiTest extends \DrupalUnitTestCase {
     $submission->webform = $this->getMockBuilder(Webform::class)
       ->disableOriginalConstructor()
       ->getMock();
+    $submission->webform->method('componentsByType')->willReturn([]);
     $submission->tracking = (object) [
       'other' => 'wc_test',
     ];
