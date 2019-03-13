@@ -2,7 +2,7 @@
 
 namespace Drupal\enterbrain;
 
-use Drupal\campaignion_newsletters\ValuePrefix;
+use Drupal\campaignion_opt_in\Values;
 use \Drupal\little_helpers\ArrayConfig;
 use \Drupal\little_helpers\Webform\Submission;
 use \Drupal\webform_paymethod_select\WebformPaymentContext;
@@ -116,25 +116,6 @@ class Api extends \SoapClient {
   }
 
   /**
-   * Check whether a submission contains a newsletter opt-in.
-   *
-   * @param \Drupal\little_helpers\Webform\Submission $s
-   *   The webform submission to check.
-   *
-   * @return bool
-   *   TRUE if any newsletter component contains an opt-in value.
-   */
-  protected function hasOptIn(Submission $s) {
-    $components = $s->webform->componentsByType('newsletter');
-    foreach ($components as $cid => $component) {
-      if (ValuePrefix::remove($s->valuesByCid($cid)) == 'opt-in') {
-        return TRUE;
-      }
-    }
-    return FALSE;
-  }
-
-  /**
    * Generate the "sonstige_info" field.
    *
    * @param \Drupal\little_helpers\Webform\Submission $s
@@ -144,7 +125,6 @@ class Api extends \SoapClient {
    *   The generated info.
    */
   public function sonstigeInfo(Submission $s) {
-    $optin = $this->hasOptIn($s);
     $d = [
       '[wc]' => $this->defaults['wc'],
       '[Projektname]' => $this->defaults['project_name'],
@@ -162,7 +142,7 @@ class Api extends \SoapClient {
     if ($s->tracking->other) {
       $d['[wc]'] = $s->tracking->other;
     }
-    $d['[true|false]'] = $optin ? 'true' : 'false';
+    $d['[true|false]'] = Values::submissionHasOptIn($s, 'email') ? 'true' : 'false';
 
     return strtr("WCintern=[wc], Verwendungszweck: [Projektname], Newsletter: [true|false], CRM-ID: [Projekt-Id]", $d);
   }
