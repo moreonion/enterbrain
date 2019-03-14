@@ -3,6 +3,7 @@ description = Send payment and other data to EnterBrain.
 core = 7.x
 configure = admin/config/services/enterbrain
 
+dependencies[] = campaignion_opt_in
 dependencies[] = little_helpers (>=7.x-1.5)
 dependencies[] = psr0
 dependencies[] = webform_paymethod_select
