@@ -2,6 +2,7 @@
 
 namespace Drupal\enterbrain;
 
+use Drupal\campaignion_opt_in\Values;
 use Drupal\little_helpers\Webform\Submission;
 use Drupal\little_helpers\Webform\Webform;
 
@@ -21,13 +22,22 @@ class ApiTest extends \DrupalUnitTestCase {
       ->disableOriginalConstructor()
       ->getMock();
     $submission->webform->method('componentsByType')->willReturn([]);
-    $submission->tracking = (object) [
+    $properties['tracking'] = (object) [
       'other' => 'wc_test',
     ];
+    $properties['opt_in'] = $this->createMock(Values::class);
+    $submission->method('__get')->will(
+      $this->returnCallback(function($prop) use ($properties) {
+        return $properties[$prop];
+      })
+    );
     $api = $this->getMockBuilder(Api::class)
       ->disableOriginalConstructor()
       ->setMethods(NULL)
       ->getMock();
+    $defaults = (new \ReflectionClass($api))->getProperty('defaults');
+    $defaults->setAccessible(TRUE);
+    $defaults->setValue($api, Api::$defaultConfig['defaults']);
     $info = $api->sonstigeInfo($submission);
     $this->assertEqual("WCintern=wc_test, Verwendungszweck: , Newsletter: false, CRM-ID: ", $info);
   }
